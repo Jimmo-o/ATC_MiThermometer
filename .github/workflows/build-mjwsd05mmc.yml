@@ -59,14 +59,27 @@ jobs:
           python3 - <<'PY'
           a = open('/tmp/BTH_v59_baseline.bin','rb').read()
           b = open('/tmp/BTH_v59_patched.bin','rb').read()
-          print(f'baseline {len(a)} bytes, patched {len(b)} bytes')
-          assert len(a) == len(b), 'SIZE DIFFERS - build not reproducible'
-          diff = [i for i in range(len(a)) if a[i] != b[i]]
-          print(f'differing bytes: {len(diff)}')
-          for i in diff[:40]:
-              print(f'  0x{i:05x}  baseline {a[i]:#04x} -> patched {b[i]:#04x}')
-          if len(diff) > 40:
-              print(f'  ... {len(diff)-40} more')
+          print(f'baseline {len(a)} bytes, patched {len(b)} bytes, delta {len(b)-len(a):+d}')
+          # common prefix / suffix -> localise the change even if sizes differ
+          p = 0
+          while p < min(len(a), len(b)) and a[p] == b[p]:
+              p += 1
+          s = 0
+          while s < min(len(a), len(b)) - p and a[len(a)-1-s] == b[len(b)-1-s]:
+              s += 1
+          print(f'common prefix ends at 0x{p:05x}, common suffix starts at '
+                f'baseline 0x{len(a)-s:05x} / patched 0x{len(b)-s:05x}')
+          mid_a = a[p:len(a)-s]; mid_b = b[p:len(b)-s]
+          print(f'changed region: baseline {len(mid_a)}B -> patched {len(mid_b)}B')
+          print('baseline region head:', mid_a[:48].hex(' '))
+          print('patched  region head:', mid_b[:48].hex(' '))
+          # locate the fctrl immediates in each build
+          for name, img in (('baseline', a), ('patched', b)):
+              for want in (b'\x58\x58', b'\x58\x59', b'\x48\x58', b'\x48\x59',
+                           b'\x50\x58', b'\x50\x59', b'\x40\x58', b'\x40\x59'):
+                  offs = [i for i in range(len(img)) if img[i:i+2] == want]
+                  if len(offs) <= 6:
+                      print(f'  {name:8} {want[::-1].hex()} at ' + ' '.join(f'{o:#x}' for o in offs))
           PY
 
       - uses: actions/upload-artifact@v4
