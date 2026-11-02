@@ -43,6 +43,7 @@ jobs:
       - name: Revert the 4 constants and build BASELINE
         run: |
           rm -f BTH_v59.bin
+          rm -rf out
           sed -i 's/fctrl\.word = 0x5958;/fctrl.word = 0x5858;/;
                   s/fctrl\.word = 0x5948;/fctrl.word = 0x5848;/;
                   s/fctrl\.word = 0x5950;/fctrl.word = 0x5850;/;
