@@ -33,14 +33,45 @@ jobs:
           find SDK/tools/linux/tc32 -type f -name 'tc32-elf-*' -exec chmod +x {} +
           SDK/tools/linux/tc32/bin/tc32-elf-gcc --version | head -1
 
-      - name: Build BTH_v59 (MJWSD05MMC ch)
+      - name: Build PATCHED (registered bit set)
         run: |
+          grep -n 'fctrl.word = 0x59' src/mi_beacon.c
           make -s -j PROJECT_NAME=BTH_v59 POJECT_DEF="-DDEVICE_TYPE=DEVICE_MJWSD05MMC"
-          ls -l BTH_v59.bin
+          cp BTH_v59.bin /tmp/BTH_v59_patched.bin
           sha256sum BTH_v59.bin
+
+      - name: Revert the 4 constants and build BASELINE
+        run: |
+          rm -f BTH_v59.bin
+          sed -i 's/fctrl\.word = 0x5958;/fctrl.word = 0x5858;/;
+                  s/fctrl\.word = 0x5948;/fctrl.word = 0x5848;/;
+                  s/fctrl\.word = 0x5950;/fctrl.word = 0x5850;/;
+                  s/fctrl\.word = 0x5940;/fctrl.word = 0x5840;/' src/mi_beacon.c
+          echo "--- after revert (must show 0x58xx) ---"
+          grep -n 'fctrl.word = 0x5' src/mi_beacon.c
+          make -s -j PROJECT_NAME=BTH_v59 POJECT_DEF="-DDEVICE_TYPE=DEVICE_MJWSD05MMC"
+          cp BTH_v59.bin /tmp/BTH_v59_baseline.bin
+          sha256sum BTH_v59.bin
+
+      - name: Diff patched vs baseline
+        run: |
+          python3 - <<'PY'
+          a = open('/tmp/BTH_v59_baseline.bin','rb').read()
+          b = open('/tmp/BTH_v59_patched.bin','rb').read()
+          print(f'baseline {len(a)} bytes, patched {len(b)} bytes')
+          assert len(a) == len(b), 'SIZE DIFFERS - build not reproducible'
+          diff = [i for i in range(len(a)) if a[i] != b[i]]
+          print(f'differing bytes: {len(diff)}')
+          for i in diff[:40]:
+              print(f'  0x{i:05x}  baseline {a[i]:#04x} -> patched {b[i]:#04x}')
+          if len(diff) > 40:
+              print(f'  ... {len(diff)-40} more')
+          PY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: BTH_v59-registered-fix
-          path: BTH_v59.bin
+          name: BTH_v59-patched-and-baseline
+          path: |
+            /tmp/BTH_v59_patched.bin
+            /tmp/BTH_v59_baseline.bin
           if-no-files-found: error
