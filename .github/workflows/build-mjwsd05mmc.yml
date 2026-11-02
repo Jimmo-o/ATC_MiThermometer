@@ -40,6 +40,16 @@ jobs:
           cp BTH_v59.bin /tmp/BTH_v59_patched.bin
           sha256sum BTH_v59.bin
 
+      - name: Disassemble PATCHED elf and confirm the fctrl immediates
+        run: |
+          OD=SDK/tools/linux/tc32/bin/tc32-elf-objdump
+          $OD -d out/BTH_v59.elf > /tmp/patched.lst
+          echo "--- instructions loading the four fctrl constants ---"
+          grep -inE '0x(5958|5948|5950|5940)\b' /tmp/patched.lst | head -20
+          echo "--- any leftover OLD constants (0x5858/0x5848/0x5850/0x5840) ---"
+          grep -inE '0x(5858|5848|5850|5840)\b' /tmp/patched.lst | head -20
+          cp out/BTH_v59.elf /tmp/BTH_v59_patched.elf
+
       - name: Revert the 4 constants and build BASELINE
         run: |
           rm -f BTH_v59.bin
@@ -88,4 +98,6 @@ jobs:
           path: |
             /tmp/BTH_v59_patched.bin
             /tmp/BTH_v59_baseline.bin
+            /tmp/BTH_v59_patched.elf
+            /tmp/patched.lst
           if-no-files-found: error
