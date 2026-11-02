@@ -141,7 +141,7 @@ void mi_encrypt_data_beacon(void) {
 	p->head.fctrl.bit.AuthMode = 2;
 	p->head.fctrl.bit.version = 5;
 #else
-	p->head.fctrl.word = 0x5858; // 0x5858 version = 5, encrypted, MACInclude, ObjectInclude
+	p->head.fctrl.word = 0x5958; // 0x5958 version = 5, encrypted, MACInclude, ObjectInclude
 #endif
 	p->head.size = data.size + sizeof(p->head) - sizeof(p->head.size) + sizeof(p->MAC) + sizeof(p->data.id) + sizeof(p->data.size) + sizeof(beacon_nonce.ext_cnt) + 4; //size data + size head + size MAC + size data head + size counter bit8..31 bits + size mic 32 bits - 1
 	u8 * pmic = (u8 *)p;
@@ -173,7 +173,7 @@ void mi_encrypt_event_beacon(u8 n) {
 	p->head.fctrl.bit.AuthMode = 2;
 	p->head.fctrl.bit.version = 5;
 #else
-	p->head.fctrl.word = 0x5848; // 0x5848 version = 5, encrypted, no MACInclude, ObjectInclude, AuthMode 2
+	p->head.fctrl.word = 0x5948; // 0x5948 version = 5, encrypted, no MACInclude, ObjectInclude, AuthMode 2
 #endif
 	p->head.dev_id = XIAOMI_DID;
 	p->head.counter = (u8)adv_buf.send_count;
@@ -224,7 +224,7 @@ void mi_data_beacon(void) {
 	p->head.fctrl.bit.AuthMode = 2;
 	p->head.fctrl.bit.version = 5;
 #else
-	p->head.fctrl.word = 0x5850; // 0x5850 version = 5, not encrypted, MACInclude, ObjectInclude, AuthMode 2
+	p->head.fctrl.word = 0x5950; // 0x5950 version = 5, not encrypted, MACInclude, ObjectInclude, AuthMode 2
 #endif
 	p->head.dev_id = XIAOMI_DID;
 	if (adv_buf.call_count < cfg.measure_interval) {
@@ -259,7 +259,7 @@ void mi_event_beacon(u8 n){
 	p->head.fctrl.bit.AuthMode = 2;
 	p->head.fctrl.bit.version = 5;
 #else
-	p->head.fctrl.word = 0x5840; // 0x5840 version = 5, not encrypted, no MACInclude, ObjectInclude, AuthMode 2
+	p->head.fctrl.word = 0x5940; // 0x5940 version = 5, not encrypted, no MACInclude, ObjectInclude, AuthMode 2
 #endif
 	p->head.dev_id = XIAOMI_DID;
 	p->head.counter = (u8)adv_buf.send_count;
